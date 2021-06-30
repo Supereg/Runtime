@@ -75,6 +75,7 @@ jobs:
           swift test -c release -Xswiftc -enable-testing -Xswiftc -DDEBUG
 
       - name: Sanitize image name # replacing ':' with '-' for actions/upload-artifact
+        if: always()
         env:
           input_image: ${{ matrix.image }}
         run: |
@@ -83,25 +84,48 @@ jobs:
           echo "::set-env name=sanitized_image::$sanitized"
 
       - name: Check Core dump Pattern
-        if: always()
+        if: failure()
         run: cat /proc/sys/kernel/core_pattern
 
       - name: Check Core dump Pattern
-        if: always()
+        if: failure()
         run: sudo cat /proc/sys/kernel/core_pattern
+      - name: List core dumps
+        if: failure()
+        run: ls -al /usr/share/apport/apport/
+
+      - name: List core dumps
+        if: failure()
+        run: ls -al /cores
 
       # the 'ulimit -c unlimited' call enables the capturing of core dumps
       - uses: actions/upload-artifact@v2
-        if: always() # TODO replace to "if failure"
+        if: failure() && matrix.configuration == 'debug'
         with:
           name: core-dump-${{ env.sanitized_image }}-${{ matrix.configuration }}
           # TODO "release directory for release builds"
           path: |
             /usr/share/apport/apport/*
             .build/debug/RuntimePackageTests.xctest
+
+      - uses: actions/upload-artifact@v2
+        if: failure() && matrix.configuration == 'release'
+        with:
+          name: core-dump-${{ env.sanitized_image }}-${{ matrix.configuration }}
+          # TODO "release directory for release builds"
+          path: |
+            /usr/share/apport/apport/*
+            .build/release/RuntimePackageTests.xctest
   macos:
 
     runs-on: macos-latest
+
+    strategy:
+      matrix:
+        configuration:
+          - debug
+          - release
+
     # TODO release configuration
     steps:
       - name: Select latest available Xcode
@@ -111,16 +135,31 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v2
 
-      - name: Run tests
-        continue-on-error: true
+      - name: Run tests (debug)
+        if: matrix.configuration == 'debug'
         run: |
           ulimit -c unlimited
           swift test
 
+      - name: Run tests (debug)
+        if: matrix.configuration == 'debug'
+        run: |
+          ulimit -c unlimited
+          swift test -c release -Xswiftc -enable-testing -Xswiftc -DDEBUG
+
       # the 'ulimit -c unlimited' call enables the capturing of core dumps
       - uses: actions/upload-artifact@v2
+        if: failure() && matrix.configuration == 'debug'
         with:
           name: core-dump-macos-${{ matrix.configuration }}
           path: |
             core
             .build/debug/RuntimePackageTests.xctest
+
+      - uses: actions/upload-artifact@v2
+        if: failure() && matrix.configuration == 'release'
+        with:
+          name: core-dump-macos-${{ matrix.configuration }}
+          path: |
+            /cores
+            .build/release/RuntimePackageTests.xctest
