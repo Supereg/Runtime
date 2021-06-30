@@ -71,23 +71,26 @@ jobs:
       # running tests in release configuration to ensure everything works as expected with compiler optimizations
       - name: Run tests (release)
         if: matrix.configuration == 'release'
-        continue-on-error: true
         run: |
           ulimit -c unlimited
           swift test -c release -Xswiftc -enable-testing -Xswiftc -DDEBUG
 
       - name: Check Core dump Pattern
+        if: always()
         run: cat /proc/sys/kernel/core_pattern
 
       - name: Check Core dump Pattern
+        if: always()
         run: sudo cat /proc/sys/kernel/core_pattern
 
       # the 'ulimit -c unlimited' call enables the capturing of core dumps
       - uses: actions/upload-artifact@v2
+        if: always()
         with:
           name: core-dump-linux-${{ matrix.image }}-${{ matrix.configuration }}
+          # TODO "release directory for release builds"
           path: |
-            core
+            /usr/share/apport/apport/*
             .build/debug/RuntimePackageTests.xctest
   macos:
 
