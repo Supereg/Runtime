@@ -10,6 +10,7 @@ on:
 jobs:
   linux:
     runs-on: ubuntu-latest
+
     strategy:
       fail-fast: false
       matrix:
@@ -46,19 +47,34 @@ jobs:
           - swiftlang/swift:nightly-focal
           - swiftlang/swift:nightly-centos8
           - swiftlang/swift:nightly-amazonlinux2
+        configuration:
+          - debug
+          - release
+
     container: ${{ matrix.image }}
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
-      - name: Run tests
+
+      - name: Run tests (debug)
+        if: matrix.configuration == 'debug'
         run: swift test
+
+      - name: Run tests (release)
+        if: matrix.configuration == 'release'
+        run: swift test -c release -Xswiftc -enable-testing -Xswiftc -DDEBUG
   macos:
+
     runs-on: macos-latest
+
     steps:
       - name: Select latest available Xcode
         uses: maxim-lobanov/setup-xcode@v1.2.1
         with: { 'xcode-version': 'latest' }
+
       - name: Checkout code
         uses: actions/checkout@v2
+
       - name: Run tests
         run: swift test
