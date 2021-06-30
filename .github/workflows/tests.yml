@@ -61,6 +61,14 @@ jobs:
       - name: Install sudo
         run: apt-get update && apt-get install -y --no-install-recommends sudo
 
+      - name: Sanitize image name # replacing ':' with '-' for actions/upload-artifact
+        env:
+          input_image: $${{ matrix.image }}
+        run: |
+          sanitized="${input_image/:/-}"
+          echo $sanitized
+          echo "::set-env name=sanitized_image::$sanitized"
+
       - name: Run tests (debug)
         if: matrix.configuration == 'debug'
         continue-on-error: true
@@ -87,7 +95,7 @@ jobs:
       - uses: actions/upload-artifact@v2
         if: always()
         with:
-          name: core-dump-linux-${{ matrix.image }}-${{ matrix.configuration }}
+          name: core-dump-linux-${{ env.sanitized_image }}-${{ matrix.configuration }}
           # TODO "release directory for release builds"
           path: |
             /usr/share/apport/apport/*
@@ -95,7 +103,7 @@ jobs:
   macos:
 
     runs-on: macos-latest
-
+    # TODO release configuration
     steps:
       - name: Select latest available Xcode
         uses: maxim-lobanov/setup-xcode@v1.2.1
