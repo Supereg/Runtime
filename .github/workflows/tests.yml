@@ -58,6 +58,9 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v2
 
+      - name: Install sudo
+        run: apt-get update && apt-get install -y --no-install-recommends sudo
+
       - name: Run tests (debug)
         if: matrix.configuration == 'debug'
         continue-on-error: true
