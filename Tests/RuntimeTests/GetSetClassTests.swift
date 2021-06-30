@@ -55,6 +55,22 @@ class GetSetClassTests: XCTestCase {
         ]
     }
 
+    func testStuff() throws {
+        let type: Any.Type = Person.self
+        // self = Self(pointer: unsafeBitCast(type, to: UnsafeMutablePointer<Layout>.self))
+        let address = unsafeBitCast(type, to: Int.self)
+        let pointer = UnsafeRawPointer(bitPattern: address)!
+        print(address)
+        print(pointer)
+
+        withUnsafeBytes(of: type) { (pointer: UnsafeRawBufferPointer) in
+            print(pointer.count)
+            for i in pointer {
+                print(i)
+            }
+        }
+    }
+
     // swiftlint:disable force_cast
     func testGet() throws {
         let info = try typeInfo(of: Person.self)

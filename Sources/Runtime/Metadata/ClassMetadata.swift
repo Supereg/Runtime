@@ -30,6 +30,7 @@ struct AnyClassMetadata {
     
     func asClassMetadata() -> ClassMetadata? {
         guard pointer.pointee.isSwiftClass else {
+            print("is not a swift class") // TODO remove
             return nil
         }
         let ptr = pointer.raw.assumingMemoryBound(to: ClassMetadataLayout.self)
@@ -75,9 +76,16 @@ struct ClassMetadata: NominalMetadataType {
         fatalError("Cannot get the `genericArgumentOffset` for classes with a resilient superclass")
     }
     
-    func superClassMetadata() -> AnyClassMetadata? {
+    mutating func superClassMetadata() -> AnyClassMetadata? {
         let superClass = pointer.pointee.superClass
+        let address = unsafeBitCast(superClass, to: Int.self)
+        print("SuperClass of \(mangledName()): \(UnsafeRawPointer(bitPattern: address)) (\(address))")
+
+        
+
+        // print(String(describing: superClass))
         guard superClass != swiftObject() else {
+            print("we are returning NIL")
             return nil
         }
         return AnyClassMetadata(type: superClass)
@@ -90,7 +98,10 @@ struct ClassMetadata: NominalMetadataType {
         info.genericTypes = Array(genericArguments())
         
         var superClass = superClassMetadata()?.asClassMetadata()
+        print("superClass: \(superClass)")
         while var sc = superClass {
+            print("sc: \(sc)")
+
             info.inheritance.append(sc.type)
             let superInfo = sc.toTypeInfo()
             info.properties.append(contentsOf: superInfo.properties)

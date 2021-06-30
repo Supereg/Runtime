@@ -24,19 +24,33 @@
 struct AnyClassMetadataLayout {
     var _kind: Int // isaPointer for classes
     var superClass: Any.Type
+    // see https://github.com/apple/swift/commit/38fc849a1fc8ea703de2fd1f280b43c682b70257#diff-22fb9f1513d9c05f34d493826b4553bba65a4336a41ae4413678feec549db3a5
+    //  https://github.com/wickwirew/Runtime/issues/92
+    #if !swift(>=5.4) || canImport(Darwin) // TODO is check for Darwin correct?
     var objCRuntimeReserve: (Int, Int)
     var rodataPointer: Int
+    #endif
     
     var isSwiftClass: Bool {
+        #if !swift(>=5.4) || canImport(Darwin) // TODO is check for Darwin correct?
         return (rodataPointer & classIsSwiftMask()) != 0
+        #else
+        return true
+        #endif
     }
 }
 
 struct ClassMetadataLayout: NominalMetadataLayoutType {
     var _kind: Int // isaPointer for classes
     var superClass: Any.Type
+
+    // see https://github.com/apple/swift/commit/38fc849a1fc8ea703de2fd1f280b43c682b70257#diff-22fb9f1513d9c05f34d493826b4553bba65a4336a41ae4413678feec549db3a5
+    //  https://github.com/wickwirew/Runtime/issues/92
+    #if !swift(>=5.4) || canImport(Darwin) // TODO is check for Darwin correct?
     var objCRuntimeReserve: (Int, Int)
     var rodataPointer: Int
+    #endif
+
     var classFlags: Int32
     var instanceAddressPoint: UInt32
     var instanceSize: UInt32
