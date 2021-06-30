@@ -52,7 +52,10 @@ jobs:
           - debug
           - release
 
-    container: ${{ matrix.image }}
+    container:
+      image: ${{ matrix.image }}
+      # https://github.community/t/how-to-get-coredump-from-inside-docker-container/18061/2
+      options: --privileged --ulimit core=-1 --security-opt seccomp=unconfined
 
     steps:
       - name: Checkout code
@@ -67,24 +70,18 @@ jobs:
           ulimit -c unlimited
           ulimit -c               # should output 'unlimited' now
 
-      - name: test access to core dump directory
-        run: |
-          sudo touch /cores/test
-          ls /cores
-          sudo rm /cores/test
-
       - name: Run tests (debug)
         if: matrix.configuration == 'debug'
         run: |
           ulimit -c unlimited
-          sudo swift test
+          swift test
 
       # running tests in release configuration to ensure everything works as expected with compiler optimizations
       - name: Run tests (release)
         if: matrix.configuration == 'release'
         run: |
           ulimit -c unlimited
-          sudo swift test -c release -Xswiftc -enable-testing -Xswiftc -DDEBUG
+          swift test -c release -Xswiftc -enable-testing -Xswiftc -DDEBUG
 
       - name: Sanitize image name # replacing ':' with '-' for actions/upload-artifact
         if: always()
@@ -99,12 +96,13 @@ jobs:
         if: failure()
         run: cat /proc/sys/kernel/core_pattern
 
-      - name: Check Core dump Pattern
-        if: failure()
-        run: sudo cat /proc/sys/kernel/core_pattern
       - name: List core dumps
         if: failure()
         run: ls -al /usr/share/apport/apport/
+
+      - name: List core dumps
+        if: failure()
+        run: ls -al /usr/share/apport/
 
       - name: List core dumps
         if: failure()
