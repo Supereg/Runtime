@@ -61,6 +61,18 @@ jobs:
       - name: Install sudo
         run: apt-get update && apt-get install -y --no-install-recommends sudo
 
+      - name: test enabling cores
+        run: |
+          ulimit -c               # should output 0 if disabled
+          ulimit -c unlimited
+          ulimit -c               # should output 'unlimited' now
+
+      - name: test access to core dump directory
+        run: |
+          sudo touch /cores/test
+          ls /cores
+          sudo rm /cores/test
+
       - name: Run tests (debug)
         if: matrix.configuration == 'debug'
         run: |
