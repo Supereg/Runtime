@@ -58,14 +58,14 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v2
 
+      - name: Check Core dump Pattern
+        run: cat /proc/sys/kernel/core_pattern
+
       - name: Run tests (debug)
         if: matrix.configuration == 'debug'
         run: |
           ulimit -c unlimited
           swift test
-
-      - name: Check Core dump Pattern
-        run: cat /proc/sys/kernel/core_pattern
 
       # running tests in release configuration to ensure everything works as expected with compiler optimizations
       - name: Run tests (release)
