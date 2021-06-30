@@ -58,11 +58,9 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v2
 
-      - name: Check Core dump Pattern
-        run: cat /proc/sys/kernel/core_pattern
-
       - name: Run tests (debug)
         if: matrix.configuration == 'debug'
+        continue-on-error: true
         run: |
           ulimit -c unlimited
           swift test
@@ -70,14 +68,21 @@ jobs:
       # running tests in release configuration to ensure everything works as expected with compiler optimizations
       - name: Run tests (release)
         if: matrix.configuration == 'release'
+        continue-on-error: true
         run: |
           ulimit -c unlimited
           swift test -c release -Xswiftc -enable-testing -Xswiftc -DDEBUG
 
+      - name: Check Core dump Pattern
+        run: cat /proc/sys/kernel/core_pattern
+
+      - name: Check Core dump Pattern
+        run: sudo cat /proc/sys/kernel/core_pattern
+
       # the 'ulimit -c unlimited' call enables the capturing of core dumps
       - uses: actions/upload-artifact@v2
         with:
-          name: core-dump
+          name: core-dump-linux-${{ matrix.image }}-${{ matrix.configuration }}
           path: |
             core
             .build/debug/RuntimePackageTests.xctest
@@ -94,6 +99,7 @@ jobs:
         uses: actions/checkout@v2
 
       - name: Run tests
+        continue-on-error: true
         run: |
           ulimit -c unlimited
           swift test
@@ -101,7 +107,7 @@ jobs:
       # the 'ulimit -c unlimited' call enables the capturing of core dumps
       - uses: actions/upload-artifact@v2
         with:
-          name: core-dump
+          name: core-dump-macos-${{ matrix.configuration }}
           path: |
             core
             .build/debug/RuntimePackageTests.xctest
