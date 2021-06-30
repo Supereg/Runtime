@@ -6,6 +6,7 @@ on:
     branches:
       - master
       - feature/github-ci
+      - experimental/core-dumps
 
 jobs:
   linux:
