@@ -64,15 +64,15 @@ jobs:
           ulimit -c unlimited
           swift test
 
+      - name: Check Core dump Pattern
+        run: cat /proc/sys/kernel/core_pattern
+
       # running tests in release configuration to ensure everything works as expected with compiler optimizations
       - name: Run tests (release)
         if: matrix.configuration == 'release'
         run: |
           ulimit -c unlimited
           swift test -c release -Xswiftc -enable-testing -Xswiftc -DDEBUG
-
-      - name: Check Core dump Pattern
-        run: cat /proc/sys/kernel/core_pattern
 
       # the 'ulimit -c unlimited' call enables the capturing of core dumps
       - uses: actions/upload-artifact@v2
