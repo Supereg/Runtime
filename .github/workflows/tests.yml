@@ -61,17 +61,8 @@ jobs:
       - name: Install sudo
         run: apt-get update && apt-get install -y --no-install-recommends sudo
 
-      - name: Sanitize image name # replacing ':' with '-' for actions/upload-artifact
-        env:
-          input_image: $${{ matrix.image }}
-        run: |
-          sanitized="${input_image/:/-}"
-          echo $sanitized
-          echo "::set-env name=sanitized_image::$sanitized"
-
       - name: Run tests (debug)
         if: matrix.configuration == 'debug'
-        continue-on-error: true
         run: |
           ulimit -c unlimited
           swift test
@@ -83,6 +74,14 @@ jobs:
           ulimit -c unlimited
           swift test -c release -Xswiftc -enable-testing -Xswiftc -DDEBUG
 
+      - name: Sanitize image name # replacing ':' with '-' for actions/upload-artifact
+        env:
+          input_image: ${{ matrix.image }}
+        run: |
+          sanitized="${input_image/:/-}"
+          echo $sanitized
+          echo "::set-env name=sanitized_image::$sanitized"
+
       - name: Check Core dump Pattern
         if: always()
         run: cat /proc/sys/kernel/core_pattern
@@ -93,9 +92,9 @@ jobs:
 
       # the 'ulimit -c unlimited' call enables the capturing of core dumps
       - uses: actions/upload-artifact@v2
-        if: always()
+        if: always() # TODO replace to "if failure"
         with:
-          name: core-dump-linux-${{ env.sanitized_image }}-${{ matrix.configuration }}
+          name: core-dump-${{ env.sanitized_image }}-${{ matrix.configuration }}
           # TODO "release directory for release builds"
           path: |
             /usr/share/apport/apport/*
