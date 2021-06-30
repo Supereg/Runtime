@@ -61,6 +61,7 @@ jobs:
         if: matrix.configuration == 'debug'
         run: swift test
 
+      # running tests in release configuration to ensure everything works as expected with compiler optimizations
       - name: Run tests (release)
         if: matrix.configuration == 'release'
         run: swift test -c release -Xswiftc -enable-testing -Xswiftc -DDEBUG
